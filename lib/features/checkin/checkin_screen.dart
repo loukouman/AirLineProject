@@ -12,7 +12,7 @@ class CheckinScreen extends StatefulWidget {
 
 class _CheckinScreenState extends State<CheckinScreen> {
   late Future<List<Map<String, dynamic>>> _futureFlights;
-  bool _submitting = false;
+  String? _submittingFlightId;
 
   @override
   void initState() {
@@ -47,7 +47,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
     final userId = SupabaseService.currentUser?.id;
     if (userId == null) return;
 
-    setState(() => _submitting = true);
+    setState(() => _submittingFlightId = flight['id'] as String);
     try {
       await SupabaseService.client.from('boarding_passes').insert({
         'passenger_id': userId,
@@ -71,7 +71,7 @@ class _CheckinScreenState extends State<CheckinScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted) setState(() => _submittingFlightId = null);
     }
   }
 
@@ -144,9 +144,11 @@ class _CheckinScreenState extends State<CheckinScreen> {
                       ),
                     ),
                     FilledButton(
-                      onPressed: _submitting ? null : () => _checkIn(f),
+                      onPressed: _submittingFlightId == f['id'] ? null : () => _checkIn(f),
                       style: FilledButton.styleFrom(backgroundColor: AppColors.skyDeep),
-                      child: const Text('S\'enregistrer'),
+                      child: _submittingFlightId == f['id']
+                          ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Text('S\'enregistrer'),
                     ),
                   ],
                 ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/airport_floor_painter.dart';
 
 class AirportMapScreen extends StatefulWidget {
   const AirportMapScreen({super.key});
@@ -141,12 +142,32 @@ class _AirportMapScreenState extends State<AirportMapScreen> {
 
                   return Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF3F7FA),
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
                     ),
-                    child: Stack(
-                      children: [
+                    clipBehavior: Clip.antiAlias,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final size = Size(constraints.maxWidth, constraints.maxHeight);
+                        Offset pct(double x, double y) => Offset(size.width * x / 100, size.height * y / 100);
+
+                        return Stack(
+                          children: [
+                            Positioned.fill(child: CustomPaint(painter: AirportFloorPainter())),
+
+                            if (_selectedGate != null)
+                              Positioned.fill(
+                                child: CustomPaint(
+                                  painter: GuideLinePainter(
+                                    from: pct(50, 95),
+                                    to: pct(
+                                      (_selectedGate!['map_x'] as num?)?.toDouble() ?? 50,
+                                      (_selectedGate!['map_y'] as num?)?.toDouble() ?? 50,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
                         ...gates.map((g) {
                           final x = (g['map_x'] as num?)?.toDouble() ?? 50;
                           final y = (g['map_y'] as num?)?.toDouble() ?? 50;
@@ -202,7 +223,9 @@ class _AirportMapScreenState extends State<AirportMapScreen> {
                               );
                             },
                           ),
-                      ],
+                          ],
+                        );
+                      },
                     ),
                   );
                 },

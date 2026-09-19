@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../features/home/home_screen.dart';
 import '../../features/boarding_pass/boarding_pass_screen.dart';
-import '../../features/airport_map/airport_map_screen.dart';
+import '../../features/geo_map/geo_map_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../theme/app_theme.dart';
 
@@ -18,7 +18,7 @@ class _MainNavigationState extends State<MainNavigation> {
   final _screens = const [
     HomeScreen(),
     BoardingPassScreen(),
-    AirportMapScreen(),
+    GeoMapScreen(),
     ProfileScreen(),
   ];
 

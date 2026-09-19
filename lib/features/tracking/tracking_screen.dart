@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/skeleton_loader.dart';
 
 class TrackingScreen extends StatefulWidget {
   final String flightId;
@@ -43,7 +44,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return const TimelineSkeleton();
             }
 
             final events = snapshot.data ?? [];
@@ -107,6 +108,18 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
 enum _EventStatus { done, now, future }
 
+IconData _iconForEvent(String title) {
+  final t = title.toLowerCase();
+  if (t.contains('enregistr')) return Icons.check_circle_outline;
+  if (t.contains('sécurit') || t.contains('securit')) return Icons.security;
+  if (t.contains('porte') || t.contains('gate')) return Icons.meeting_room_outlined;
+  if (t.contains('embarqu')) return Icons.airline_seat_recline_normal;
+  if (t.contains('décoll') || t.contains('decoll')) return Icons.flight_takeoff;
+  if (t.contains('atterr')) return Icons.flight_land;
+  if (t.contains('bagage')) return Icons.luggage_outlined;
+  return Icons.circle;
+}
+
 class _TimelineTile extends StatelessWidget {
   final String title;
   final String? description;
@@ -131,6 +144,7 @@ class _TimelineTile extends StatelessWidget {
     };
     final titleColor = status == _EventStatus.now ? AppColors.coral : AppColors.ink;
     final timeLabel = status == _EventStatus.now ? 'Maintenant' : DateFormat('HH:mm').format(time);
+    final isPastOrNow = status != _EventStatus.future;
 
     return IntrinsicHeight(
       child: Row(
@@ -139,19 +153,25 @@ class _TimelineTile extends StatelessWidget {
           Column(
             children: [
               Container(
-                width: 12,
-                height: 12,
+                width: 26,
+                height: 26,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: dotColor,
+                  color: isPastOrNow ? dotColor : Colors.white,
+                  border: isPastOrNow ? null : Border.all(color: Colors.black.withValues(alpha: 0.12)),
                   boxShadow: status == _EventStatus.now
                       ? [BoxShadow(color: AppColors.coral.withValues(alpha: 0.3), blurRadius: 8, spreadRadius: 3)]
                       : null,
                 ),
+                child: Icon(
+                  _iconForEvent(title),
+                  size: 14,
+                  color: isPastOrNow ? Colors.white : AppColors.inkSoft.withValues(alpha: 0.6),
+                ),
               ),
               if (!isLast)
                 Expanded(
-                  child: Container(width: 1.5, color: Colors.black.withValues(alpha: 0.08)),
+                  child: Container(width: 1.5, margin: const EdgeInsets.symmetric(vertical: 4), color: Colors.black.withValues(alpha: 0.08)),
                 ),
             ],
           ),

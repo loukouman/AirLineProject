@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
+import 'admin_dashboard_screen.dart';
 import 'admin_flights_screen.dart';
 import 'admin_alerts_screen.dart';
 import 'admin_roles_screen.dart';
@@ -11,7 +12,7 @@ class AdminScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 4,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Administration'),
@@ -21,6 +22,7 @@ class AdminScreen extends StatelessWidget {
             indicatorColor: AppColors.primary,
             isScrollable: true,
             tabs: [
+              Tab(text: 'Tableau de bord'),
               Tab(text: 'Vols'),
               Tab(text: 'Alertes'),
               Tab(text: 'Rôles'),
@@ -30,6 +32,7 @@ class AdminScreen extends StatelessWidget {
         ),
         body: const TabBarView(
           children: [
+            AdminDashboardScreen(),
             AdminFlightsScreen(),
             AdminAlertsScreen(),
             AdminRolesScreen(),

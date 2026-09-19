@@ -26,6 +26,14 @@ dependencies:
   google_sign_in: ^7.2.0
   firebase_core: ^4.14.0
   firebase_messaging: ^16.6.0
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
+  geolocator: ^14.0.3
+  video_player: ^2.12.0
+  media_kit: ^1.2.6
+  media_kit_video: any
+  media_kit_libs_video: any
+  connectivity_plus: ^7.3.1
 
 dev_dependencies:
   flutter_test:

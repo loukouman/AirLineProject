@@ -6,6 +6,9 @@ import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ticket_shape.dart';
 import '../../core/widgets/offline_banner.dart';
+import '../../core/widgets/countdown_text.dart';
+import '../../core/widgets/skeleton_loader.dart';
+import 'dart:async';
 
 class BoardingPassScreen extends StatefulWidget {
   const BoardingPassScreen({super.key});
@@ -16,11 +19,21 @@ class BoardingPassScreen extends StatefulWidget {
 
 class _BoardingPassScreenState extends State<BoardingPassScreen> {
   late Future<List<Map<String, dynamic>>> _future;
+  StreamSubscription<List<Map<String, dynamic>>>? _flightsWatchSub;
 
   @override
   void initState() {
     super.initState();
     _future = SupabaseService.getMyFlights();
+    _flightsWatchSub = SupabaseService.watchAllFlightsRaw().listen((_) {
+      if (mounted) _refresh();
+    });
+  }
+
+  @override
+  void dispose() {
+    _flightsWatchSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _refresh() async {
@@ -74,7 +87,10 @@ class _MyPassesTab extends StatelessWidget {
         future: future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: FlightCardSkeleton(),
+            );
           }
 
           final passes = snapshot.data ?? [];
@@ -135,11 +151,21 @@ class _FlightBoardTab extends StatefulWidget {
 
 class _FlightBoardTabState extends State<_FlightBoardTab> {
   late Future<List<Map<String, dynamic>>> _future;
+  StreamSubscription<List<Map<String, dynamic>>>? _flightsWatchSub;
 
   @override
   void initState() {
     super.initState();
     _future = SupabaseService.getAllFlights();
+    _flightsWatchSub = SupabaseService.watchAllFlightsRaw().listen((_) {
+      if (mounted) _refresh();
+    });
+  }
+
+  @override
+  void dispose() {
+    _flightsWatchSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _refresh() async {
@@ -197,7 +223,7 @@ class _BoardRow extends StatelessWidget {
     Color statusColor;
     switch (flight.status) {
       case 'embarquement':
-        statusColor = AppColors.primary;
+        statusColor = const Color(0xFF378ADD);
         break;
       case 'retarde':
         statusColor = Colors.orange;
@@ -301,7 +327,14 @@ class _BoardingPassCard extends StatelessWidget {
                       Text(flight.airlineName.isEmpty ? 'COMPAGNIE' : flight.airlineName.toUpperCase(),
                           style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
                     ]),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 8),
+                    if (flight.boardingTime != null)
+                      CountdownText(
+                        target: flight.boardingTime!,
+                        pastLabel: 'Embarquement en cours',
+                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

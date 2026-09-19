@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:media_kit/media_kit.dart';
+import 'core/services/data_saver_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -12,10 +14,12 @@ import 'features/auth/auth_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
 
   await dotenv.load(fileName: '.env');
   await Hive.initFlutter();
   await Hive.openBox('envol_cache');
+  await DataSaverService.initialize();
   await Firebase.initializeApp();
 
   await SupabaseService.initialize(

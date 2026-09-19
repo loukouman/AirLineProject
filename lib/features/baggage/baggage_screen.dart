@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
@@ -11,11 +12,21 @@ class BaggageScreen extends StatefulWidget {
 
 class _BaggageScreenState extends State<BaggageScreen> {
   late Future<List<Map<String, dynamic>>> _future;
+  StreamSubscription<List<Map<String, dynamic>>>? _watchSub;
 
   @override
   void initState() {
     super.initState();
     _future = SupabaseService.getMyFlights();
+    _watchSub = SupabaseService.watchBaggagesRaw().listen((_) {
+      if (mounted) _refresh();
+    });
+  }
+
+  @override
+  void dispose() {
+    _watchSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _refresh() async {

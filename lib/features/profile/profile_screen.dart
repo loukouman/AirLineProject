@@ -4,6 +4,9 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/services/supabase_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../admin/admin_screen.dart';
+import '../loyalty/loyalty_screen.dart';
+import '../../core/services/data_saver_service.dart';
+import '../vault/document_vault_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -109,7 +112,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
+
+            InkWell(
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoyaltyScreen())),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [AppColors.primary, AppColors.primaryDark], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.military_tech, color: Colors.white, size: 26),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Programme de fidélité', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                          Text('Voir mes points et avantages', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 14),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
 
             FutureBuilder<String>(
               future: _futureRole,
@@ -139,6 +172,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
             ),
 
+            InkWell(
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const DocumentVaultScreen())),
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF3F7FA),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.lock_outline, color: AppColors.primary, size: 22),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Coffre-fort documents', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          Text('Passeport, CNI, visa, vaccination...', style: TextStyle(fontSize: 11, color: AppColors.inkSoft)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.arrow_forward_ios, color: AppColors.inkSoft, size: 14),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            const Text('Mode économe en données', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            const SizedBox(height: 4),
+            const Text(
+              'Réduit la consommation de données (les vidéos publicitaires ne se chargent pas automatiquement).',
+              style: TextStyle(fontSize: 11, color: AppColors.inkSoft),
+            ),
+            const SizedBox(height: 10),
+            ValueListenableBuilder<String>(
+              valueListenable: DataSaverService.mode,
+              builder: (context, currentMode, _) {
+                return Row(
+                  children: [
+                    Expanded(child: _ModeChip(label: 'Auto', selected: currentMode == 'auto', onTap: () => DataSaverService.setMode('auto'))),
+                    const SizedBox(width: 8),
+                    Expanded(child: _ModeChip(label: 'Activé', selected: currentMode == 'on', onTap: () => DataSaverService.setMode('on'))),
+                    const SizedBox(width: 8),
+                    Expanded(child: _ModeChip(label: 'Désactivé', selected: currentMode == 'off', onTap: () => DataSaverService.setMode('off'))),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+
             const Divider(),
             const SizedBox(height: 12),
             SizedBox(
@@ -156,6 +243,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModeChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _ModeChip({required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary.withValues(alpha: 0.12) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: selected ? AppColors.primary : Colors.black.withValues(alpha: 0.15)),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: selected ? AppColors.primary : AppColors.textDark),
         ),
       ),
     );

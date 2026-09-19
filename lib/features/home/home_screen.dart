@@ -8,6 +8,10 @@ import '../../core/widgets/notification_bell.dart';
 import '../../core/widgets/ad_banner.dart';
 import '../../core/widgets/offline_banner.dart';
 import '../../core/widgets/ticket_shape.dart';
+import '../../core/widgets/countdown_text.dart';
+import '../../core/widgets/skeleton_loader.dart';
+import '../../core/widgets/gate_walk_banner.dart';
+import 'dart:async';
 import '../checkin/checkin_screen.dart';
 import '../tracking/tracking_screen.dart';
 import '../airport_map/airport_map_screen.dart';
@@ -25,16 +29,29 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late Future<List<Map<String, dynamic>>> _futureFlights;
+  StreamSubscription<List<Map<String, dynamic>>>? _flightsWatchSub;
 
   @override
   void initState() {
     super.initState();
     _futureFlights = SupabaseService.getMyFlights();
+    // Se rafraîchit automatiquement dès qu'un vol change (statut, porte,
+    // horaire...), sans que le voyageur ait besoin de tirer pour actualiser.
+    _flightsWatchSub = SupabaseService.watchAllFlightsRaw().listen((_) {
+      if (mounted) _refresh();
+    });
+  }
+
+  @override
+  void dispose() {
+    _flightsWatchSub?.cancel();
+    super.dispose();
   }
 
   String get _greeting {
     final hour = DateTime.now().hour;
-    if (hour >= 5 && hour < 18) return 'Bonjour';
+    if (hour >= 5 && hour < 12) return 'Bonjour';
+    if (hour >= 12 && hour < 18) return 'Bon après-midi';
     return 'Bonsoir';
   }
 
@@ -77,28 +94,30 @@ class _HomeScreenState extends State<HomeScreen> {
         centerTitle: true,
         actions: const [NotificationBell(), SizedBox(width: 8)],
       ),
-      body: RefreshIndicator(
-        onRefresh: _refresh,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const AdBanner(),
-              const SizedBox(height: 18),
-
-              Center(
-                child: Column(
-                  children: [
-                    Text(_greeting, style: const TextStyle(color: AppColors.inkSoft, fontSize: 12)),
-                    Text(firstName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  ],
-                ),
+      body: Column(
+        children: [
+          const AdBanner(),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: Column(
+                children: [
+                  Text(_greeting, style: const TextStyle(color: AppColors.inkSoft, fontSize: 12)),
+                  Text(firstName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                ],
               ),
-              const SizedBox(height: 16),
-
-              FutureBuilder<List<Map<String, dynamic>>>(
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _refresh,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FutureBuilder<List<Map<String, dynamic>>>(
                 future: _futureFlights,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -125,6 +144,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         onTap: () => _openTracking(nextFlight),
                         child: _FlightCard(flight: nextFlight, seat: nextData['seat'] as String?),
                       ),
+                      if (nextFlight.gateCode != null && nextFlight.boardingTime != null) ...[
+                        const SizedBox(height: 10),
+                        GateWalkBanner(
+                          gateCode: nextFlight.gateCode!,
+                          boardingTime: nextFlight.boardingTime!,
+                        ),
+                      ],
                       if (others.isNotEmpty) ...[
                         const SizedBox(height: 20),
                         const Text('Vos autres vols', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -177,6 +203,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+      ),
+    ),
+  ],
       ),
     );
   }
@@ -277,7 +306,14 @@ class _FlightCard extends StatelessWidget {
                   style: const TextStyle(color: Colors.white, fontSize: 10, letterSpacing: 1),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
+              if (flight.boardingTime != null)
+                CountdownText(
+                  target: flight.boardingTime!,
+                  pastLabel: 'Embarquement en cours',
+                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+              const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
